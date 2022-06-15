@@ -3,13 +3,13 @@ from pydantic import EmailStr, FilePath
 from typing import Optional
 
 # Import Models
-from models.role import Role
+from models.country import Country
 
 # Import Utility Validators
 from validators.PhoneNumber import PhoneNumber
 
 
-class Admin(Model):
+class Client(Model):
     name: str
     email: EmailStr
     phone: PhoneNumber
@@ -17,7 +17,7 @@ class Admin(Model):
     password: str
     status: bool = Field(default=False)
     avatar: Optional[FilePath]
-    role: Role = Reference()
+    country: Country = Reference()
 
     class Config:
-        collection = "admins"
+        collection = "clients"
