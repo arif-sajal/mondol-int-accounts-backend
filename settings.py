@@ -15,10 +15,10 @@ class ServerSettings(BaseSettings):
 
 
 class DatabaseSettings(BaseSettings):
-    DB_URL: str = f'mongodb+srv://{os.getenv("MONGO_USERNAME")}:{os.getenv("MONGO_PASSWORD")}@{os.getenv("MONGO_HOSTNAME")}'
-    DB_NAME: str = os.getenv("MONGO_DBNAME")
-    # DB_URL: str = f'mongodb+srv://bbazaar:sajals70@bbazaar.uawcu.mongodb.net/?retryWrites=true&w=majority'
-    # DB_NAME: str = 'mi-back'
+    # DB_URL: str = f'mongodb+srv://{os.getenv("MONGO_USERNAME")}:{os.getenv("MONGO_PASSWORD")}@{os.getenv("MONGO_HOSTNAME")}'
+    # DB_NAME: str = os.getenv("MONGO_DBNAME")
+    DB_URL: str = f'mongodb+srv://bbazaar:sajals70@bbazaar.uawcu.mongodb.net/?retryWrites=true&w=majority'
+    DB_NAME: str = 'mi-back'
 
 
 class Settings(CommonSettings, ServerSettings, DatabaseSettings):
