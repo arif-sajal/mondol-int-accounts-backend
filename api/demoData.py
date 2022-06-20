@@ -17,7 +17,7 @@ from bcrypt import hashpw, gensalt
 api = APIRouter(
     prefix='/v1/demo-data',
     tags=["Demo Data"],
-    dependencies=[Depends(Auth().wrapper)]
+    dependencies=[]
 )
 
 
@@ -44,7 +44,7 @@ async def purge_database():
     for currency in currencies:
         await db.delete(currency)
 
-    return {'loc': ['demo-data', 'purge'], 'message': 'Database Purged Successfully.'}
+    return {'loc': ['demo-data', 'purge'], 'msg': 'Database Purged Successfully.'}
 
 
 @api.get('/import-countries', response_model=DemoDataResponse, description='Delete previous Countries and import new countries.')
@@ -60,7 +60,7 @@ async def import_countries():
     ]
 
     await db.save_all(countries)
-    return {'loc': ['demo-data', 'countries'], 'message': 'Countries Imported Successfully'}
+    return {'loc': ['demo-data', 'countries'], 'msg': 'Countries Imported Successfully'}
 
 
 @api.get('/import-currencies', response_model=DemoDataResponse, description='Delete previous currencies and import new currencies.')
@@ -76,7 +76,7 @@ async def import_currencies():
     ]
 
     await db.save_all(countries)
-    return {'loc': ['demo-data', 'currencies'], 'message': 'Currencies Imported Successfully'}
+    return {'loc': ['demo-data', 'currencies'], 'msg': 'Currencies Imported Successfully'}
 
 
 @api.get('/import-roles', response_model=DemoDataResponse, description='Delete previous Roles and import new roles.')
@@ -92,7 +92,7 @@ async def import_roles():
     roles.append(super_admin)
 
     await db.save_all(roles)
-    return {'loc': ['demo-data', 'roles'], 'message': 'Roles Imported Successfully'}
+    return {'loc': ['demo-data', 'roles'], 'msg': 'Roles Imported Successfully'}
 
 
 @api.get('/import-admins', response_model=DemoDataResponse, description='Delete previous Admins and import new admins.')
@@ -103,16 +103,17 @@ async def import_admins():
 
     super_admin_role = await db.find_one(Role, Role.name == 'Super Admin')
     random_role = await db.find_one(Role)
+    auth = Auth()
 
     admins = [
-        Admin(name='Admin', email="admin@admin.com", phone='+8801908088977', username='admin',
-              password=hashpw('123456'.encode('utf-8'), gensalt()), role=super_admin_role),
+        Admin(name='Admin', email="admin@admin.com", phone='+8801908088977', username='admin', status=True,
+              password=auth.encode_password('123456'), role=super_admin_role),
         Admin(name='Arif Sajal', phone='+8801954465596', email="sajalarifulislam@gmail.com", username='arifsajal',
-              password=hashpw('123456'.encode('utf-8'), gensalt()), role=random_role),
+              status=True, password=auth.encode_password('123456'), role=random_role),
     ]
 
     await db.save_all(admins)
-    return {'loc': ['demo-data', 'admins'], 'message': 'Admins Imported Successfully'}
+    return {'loc': ['demo-data', 'admins'], 'msg': 'Admins Imported Successfully'}
 
 
 @api.get('/import-clients', response_model=DemoDataResponse, description='Delete previous Clients and import new clients.')
@@ -123,17 +124,19 @@ async def import_clients():
 
     first_country = await db.find_one(Country)
     second_country = await db.find_one(Country)
+    auth = Auth()
 
     clients = [
-        Client(name='Client', email="client@client.com", phone='+8801908088977', username='client', password=hashpw('123456'.encode('utf-8'), gensalt()), country=first_country),
-        Client(name='Arif Sajal', email="sajalarifulislam@gmail.com", phone='+8801954465596', username='arifsajal', password=hashpw('123456'.encode('utf-8'), gensalt()), country=second_country),
+        Client(name='Client', email="client@client.com", phone='+8801908088977', username='client', password=auth.encode_password('123456'), status=True, country=first_country),
+        Client(name='Arif Sajal', email="sajalarifulislam@gmail.com", phone='+8801954465596', username='arifsajal', password=auth.encode_password('123456'), status=True, country=second_country),
     ]
 
     await db.save_all(clients)
-    return {'loc': ['demo-data', 'clients'], 'message': 'Clients Imported Successfully'}
+    return {'loc': ['demo-data', 'clients'], 'msg': 'Clients Imported Successfully'}
 
 
-@api.get('/reset', response_model=DemoDataResponse, description='Delete all data from database and re import all data again.')
+@api.get('/reset', response_model=DemoDataResponse, description='Delete all data from database and re import all data '
+                                                                'again.')
 async def full_database_reset():
     await purge_database()
     await import_countries()
@@ -142,4 +145,4 @@ async def full_database_reset():
     await import_admins()
     await import_clients()
 
-    return {'loc': ['demo-data', 'reset'], 'message': 'Database Reset Successful.'}
+    return {'loc': ['demo-data', 'reset'], 'msg': 'Database Reset Successful.'}

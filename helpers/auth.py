@@ -18,8 +18,6 @@ import jwt
 
 class Auth:
 
-    security = HTTPBearer()
-
     def __init__(self):
         self.password_context = CryptContext(schemes=['bcrypt'])
         self.secret = settings.APP_SECRET
@@ -33,9 +31,12 @@ class Auth:
 
     def encode_token(self, user: Union[Admin, Client]):
         payload = {
-            "user": user.id,
-            "type": isinstance(user, Admin) and 'admin' or 'client',
-            "expiry": datetime.utcnow() + timedelta(days=7)
+            "user": {
+                "id": str(user.id),
+                "role": isinstance(user, Admin) and str(user.role.id) or None,
+                "type": isinstance(user, Admin) and 'admin' or 'client'
+            },
+            "expiry": str(datetime.utcnow() + timedelta(days=7))
         }
 
         e_token = jwt.encode(payload, self.secret, algorithm=self.algorithm)
@@ -43,12 +44,13 @@ class Auth:
 
     def decode_token(self, token: str):
         try:
-            d_token = jwt.decode(token, self.secret, algorithm=self.algorithm)
-            return d_token if d_token['expiry'] >= datetime.utcnow() else None
+            d_token = jwt.decode(token, self.secret, algorithms=[self.algorithm])
+            return d_token if datetime.strptime(d_token['expiry'], '%Y-%m-%d %H:%M:%S.%f') >= datetime.utcnow() else None
         except jwt.ExpiredSignatureError:
             raise HTTPException(status_code=401, detail='Auth Token Expired.')
         except jwt.InvalidTokenError:
             raise HTTPException(status_code=401, detail='Invalid Auth Token Supplied.')
 
-    def wrapper(self, auth: HTTPAuthorizationCredentials = Security(security)):
+    def wrapper(self, auth: HTTPAuthorizationCredentials = Security(HTTPBearer())):
+        print(auth)
         return self.decode_token(auth.credentials)

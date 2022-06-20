@@ -4,6 +4,7 @@ from typing import Optional
 
 # Import Models
 from models.role import Role
+from models.auth import PhoneLogin, ResetPassword
 
 # Import Utility Validators
 from validators.PhoneNumber import PhoneNumber
@@ -15,6 +16,8 @@ class Admin(Model):
     phone: PhoneNumber
     username: str
     password: str
+    phone_login: Optional[PhoneLogin]
+    reset_password: Optional[ResetPassword]
     status: bool = Field(default=False)
     avatar: Optional[FilePath]
     role: Role = Reference()

@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from api import demoData, auth
+from api import demoData, auth, country
 
 description = """
 
@@ -10,15 +10,16 @@ _Authentication_, _Countries_, _Currencies_, _Roles_, _Admins_, _Clients_
 
 ## Authentication 🔐
 
-* **Login** With Credential (_not implemented_).
-* Request OTP For **Login** With Phone (_not implemented_).
-* **Login** With Phone (_not implemented_).
-* **Request Reset Password Key** (_not implemented_).
-* **Reset Password** (_not implemented_).
+* **Login** With Credential (_Implemented_).
+* Request OTP For **Login** With Phone (_Implemented_).
+* **Login** With Phone (_Implemented_).
+* Request **Reset Password** OTP (_Implemented_).
+* Verify **Reset Password** OTP (_Implemented_).
+* **Reset Password** (_Implemented_).
 
 ## Countries 🌍
 
-* **Read Countries** (Pagination - Optional) (_not implemented_).
+* **Read Countries** (Pagination) (_not implemented_).
 * **Read Single Country** (_not implemented_).
 * **Create Country** (_not implemented_).
 * **Update Country** (_not implemented_).
@@ -26,16 +27,16 @@ _Authentication_, _Countries_, _Currencies_, _Roles_, _Admins_, _Clients_
 
 ## Currencies 💸
 
-* **Read Currencies** (Pagination - Optional) (_not implemented_).
-* **Read Single Currency** (Pagination - Optional) (_not implemented_).
+* **Read Currencies** (Pagination) (_not implemented_).
+* **Read Single Currency** (_not implemented_).
 * **Create Currency** (_not implemented_).
 * **Update Currency** (_not implemented_).
 * **Delete Currency** (_not implemented_).
 
 ## Role ⛹
 
-* **Read Roles** (Pagination - Optional) (_not implemented_).
-* **Read Single Role** (Pagination - Optional) (_not implemented_).
+* **Read Roles** (Pagination) (_not implemented_).
+* **Read Single Role** (_not implemented_).
 * **Create Role** (_not implemented_).
 * **Update Role** (_not implemented_).
 * **Delete Role** (_not implemented_).
@@ -43,8 +44,8 @@ _Authentication_, _Countries_, _Currencies_, _Roles_, _Admins_, _Clients_
 
 ## Admins
 
-* **Read Admins** (Pagination - Optional) (_not implemented_).
-* **Read Single Admin** (Pagination - Optional) (_not implemented_).
+* **Read Admins** (Pagination) (_not implemented_).
+* **Read Single Admin** (_not implemented_).
 * **Create Admin** (_not implemented_).
 * **Update Admin** (_not implemented_).
 * **Delete Admin** (_not implemented_).
@@ -53,13 +54,21 @@ _Authentication_, _Countries_, _Currencies_, _Roles_, _Admins_, _Clients_
 
 ## Client
 
-* **Read Clients** (Pagination - Optional) (_not implemented_).
-* **Read Single Clients** (Pagination - Optional) (_not implemented_).
-* **Create Clients** (_not implemented_).
-* **Update Clients** (_not implemented_).
-* **Delete Clients** (_not implemented_).
-* **Change Admin Clients** (_not implemented_).
-* **Change Admin Clients Status** (_not implemented_).
+* **Read Clients** (Pagination) (_not implemented_).
+* **Read Single Clients** (_not implemented_).
+* **Create Client** (_not implemented_).
+* **Update Client** (_not implemented_).
+* **Delete Client** (_not implemented_).
+* **Change Client Password** (_not implemented_).
+* **Change Client Status** (_not implemented_).
+
+## Accounts
+
+* **Read Accounts** (Pagination) (_not implemented_).
+* **Read Single Account** (_not implemented_).
+* **Create Account** (_not implemented_).
+* **Update Account** (_not implemented_).
+* **Delete Account** (_not implemented_).
 """
 
 tags_metadata = [
@@ -91,6 +100,10 @@ tags_metadata = [
         "name": "Clients",
         "description": "Operations with **Admins**."
     },
+    {
+        "name": "Accounts",
+        "description": "Operations with **Accounts**."
+    },
 ]
 
 app = FastAPI(
@@ -116,3 +129,4 @@ app.add_middleware(
 
 app.include_router(demoData.api)
 app.include_router(auth.api)
+app.include_router(country.api)
