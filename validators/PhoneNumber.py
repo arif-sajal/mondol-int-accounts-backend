@@ -13,9 +13,9 @@ class PhoneNumber(str):
             if phonenumbers.is_valid_number(number):
                 return v
             else:
-                raise ValueError("invalid.phone.number")
+                raise ValueError("Invalid phone number.")
         except phonenumbers.phonenumberutil.NumberParseException:
-            raise ValueError("invalid.phone.number")
+            raise ValueError("Invalid phone number")
 
     @classmethod
     def __modify_schema__(cls, field_schema):

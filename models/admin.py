@@ -23,4 +23,18 @@ class Admin(Model):
     role: Role = Reference()
 
     class Config:
+        title = 'Main admin model for internal use.'
+        collection = "admins"
+
+
+class AdminOut(Model):
+    name: str
+    email: EmailStr
+    phone: PhoneNumber
+    username: str
+    status: bool = Field(default=False)
+    avatar: Optional[FilePath]
+
+    class Config:
+        title = 'Admin model for external use.'
         collection = "admins"

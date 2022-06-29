@@ -17,7 +17,7 @@ modules = [
     },
     {
         'name': 'role',
-        'label': 'Dashboard',
+        'label': 'Role',
         'permissions': [
             {
                 'name': 'create',
@@ -39,7 +39,7 @@ modules = [
     },
     {
         'name': 'admin',
-        'label': 'Dashboard',
+        'label': 'Admin',
         'permissions': [
             {
                 'name': 'create',
@@ -61,7 +61,7 @@ modules = [
     },
     {
         'name': 'client',
-        'label': 'Dashboard',
+        'label': 'Client',
         'permissions': [
             {
                 'name': 'create',
@@ -83,7 +83,7 @@ modules = [
     },
     {
         'name': 'country',
-        'label': 'Dashboard',
+        'label': 'Country',
         'permissions': [
             {
                 'name': 'create',
@@ -105,7 +105,29 @@ modules = [
     },
     {
         'name': 'currency',
-        'label': 'Dashboard',
+        'label': 'Currency',
+        'permissions': [
+            {
+                'name': 'create',
+                'label': 'Create',
+            },
+            {
+                'name': 'read',
+                'label': 'Read',
+            },
+            {
+                'name': 'update',
+                'label': 'Update',
+            },
+            {
+                'name': 'delete',
+                'label': 'Delete',
+            }
+        ]
+    },
+    {
+        'name': 'account',
+        'label': 'Account',
         'permissions': [
             {
                 'name': 'create',
@@ -132,6 +154,7 @@ class Role:
 
     def __init__(self):
         self.modules = modules
+        self.model = None
 
     def get_modules(self) -> list:
         """
@@ -140,14 +163,23 @@ class Role:
         """
         return self.modules
 
-    def get_module(self, name) -> dict:
+    def get_module(self, name):
         return next((mod for mod in self.modules if mod['name'] == name), None)
 
-    def get_permissions(self, name) -> list:
+    def get_permissions(self, name):
         return self.get_module(name)['permissions']
 
-    def get_permission(self, module_name, name) -> dict:
+    def get_permission(self, module_name, name):
         return next((permission for permission in self.get_permissions(module_name) if permission['name'] == name), None)
+
+    def get_permissions_from_model(self, name):
+        permissions = name in self.model and self.model[name] or None
+        return permissions
+
+    def get_permission_from_model(self, module_name, name):
+        permissions = self.get_permissions_from_model(module_name)
+        permission = permissions is not None and name in permissions and permissions[name] or None
+        return permission
 
     def get_super_admin_role(self) -> RoleModel:
         module_list = list()
@@ -191,9 +223,25 @@ class Role:
             modules=module_list
         )
 
+    def get_prepared_modules_from_model(self, model):
+        self.model = model
+        module_list = list()
+        for module in self.modules:
+            m = ModuleModel(
+                name=module['name'],
+                permissions=PermissionsModel(
+                    create=self.get_permission_from_model(module['name'], 'create') is not None and self.get_permission_from_model(module['name'], 'create') or False,
+                    read=self.get_permission_from_model(module['name'], 'read') is not None and (module['name'] == 'dashboard' and True or self.get_permission_from_model(module['name'], 'read')) or False,
+                    update=self.get_permission_from_model(module['name'], 'update') is not None and self.get_permission_from_model(module['name'], 'update') or False,
+                    delete=self.get_permission_from_model(module['name'], 'delete') is not None and self.get_permission_from_model(module['name'], 'delete') or False
+                )
+            )
+
+            module_list.append(m)
+        return module_list
+
     def get_random_roles(self, number) -> [RoleModel]:
         roles = list()
         for _ in range(number):
             roles.append(self.get_random_role())
         return roles
-

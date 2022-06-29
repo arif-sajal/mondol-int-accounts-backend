@@ -5,15 +5,14 @@ from typing import Optional, List, Union
 from helpers.pagination import PaginationResult
 
 # Import Models
-from models.country import Country
+from models.role import Role
 
 
-class CountriesPaginatedResults(PaginationResult):
-    data: Optional[List[Country]]
+class RolesPaginatedResults(PaginationResult):
+    data: Optional[List[Role]]
 
 
-class CountryResponse(BaseBSONModel):
+class RoleResponse(BaseBSONModel):
     loc: List[Union[str, int]]
     msg: str
-    data: Optional[Union[List[Country], Country]]
-
+    data: Optional[Union[List[Role], Role]]

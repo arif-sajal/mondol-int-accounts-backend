@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from api import demoData, auth, country
+from api import demoData, auth, country, currency, role, admin
 
 description = """
 
@@ -19,11 +19,12 @@ _Authentication_, _Countries_, _Currencies_, _Roles_, _Admins_, _Clients_
 
 ## Countries 🌍
 
-* **Read Countries** (Pagination) (_not implemented_).
-* **Read Single Country** (_not implemented_).
-* **Create Country** (_not implemented_).
-* **Update Country** (_not implemented_).
-* **Delete Country** (_not implemented_).
+* **Read Countries** (Pagination) (_Implemented_).
+* **Read Country Options** (_Implemented_).
+* **Read Single Country** (_Implemented_).
+* **Create Country** (_Implemented_).
+* **Update Country** (_Implemented_).
+* **Delete Country** (_Implemented_).
 
 ## Currencies 💸
 
@@ -89,7 +90,7 @@ tags_metadata = [
         "description": "Operations with **Countries**."
     },
     {
-        "name": "Role",
+        "name": "Roles",
         "description": "Operations with **Roles**."
     },
     {
@@ -107,7 +108,7 @@ tags_metadata = [
 ]
 
 app = FastAPI(
-    title='Mondol International Accounts Backend API Endpoints',
+    title='M.I.A. Backend API Endpoints',
     version='0.0.1',
     description=description,
     openapi_tags=tags_metadata,
@@ -130,3 +131,6 @@ app.add_middleware(
 app.include_router(demoData.api)
 app.include_router(auth.api)
 app.include_router(country.api)
+app.include_router(currency.api)
+app.include_router(role.api)
+app.include_router(admin.api)
