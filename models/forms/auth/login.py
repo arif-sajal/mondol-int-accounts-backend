@@ -16,3 +16,7 @@ class RequestOtpForPhoneLoginForm(BaseBSONModel):
 class LoginWithPhoneForm(BaseBSONModel):
     phone: PhoneNumber
     code: str
+
+
+class RefreshTokenForm(BaseBSONModel):
+    refresh_token: str

@@ -24,3 +24,16 @@ class Client(Model):
 
     class Config:
         collection = "clients"
+
+
+class ClientOut(Model):
+    name: str
+    email: EmailStr
+    phone: PhoneNumber
+    username: str
+    status: bool = Field(default=False)
+    avatar: Optional[FilePath]
+    country: Country = Reference()
+
+    class Config:
+        collection = "clients"

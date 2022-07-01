@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Response, status
+from fastapi import APIRouter, Response, status, Depends
+from odmantic import ObjectId
 
 # Import Helpers
 from helpers.auth import Auth
@@ -6,6 +7,7 @@ from helpers.database import db
 
 # Import Models
 from models.admin import Admin
+from models.role import Role
 from models.client import Client
 from models.auth import PhoneLogin, ResetPassword
 
@@ -13,7 +15,8 @@ from models.auth import PhoneLogin, ResetPassword
 from models.forms.auth.login import \
     LoginWithCredentialForm, \
     RequestOtpForPhoneLoginForm, \
-    LoginWithPhoneForm
+    LoginWithPhoneForm, \
+    RefreshTokenForm
 from models.forms.auth.reset import \
     RequestResetPasswordOtpForm, \
     VerifyResetPasswordOtpForm, \
@@ -24,7 +27,8 @@ from models.response.auth.login import \
     LoginWithCredentialResponse, \
     LoginErrorResponse, \
     RequestOtpForPhoneLoginResponse, \
-    LoginWithPhoneResponse
+    LoginWithPhoneResponse, \
+    LoggedInUserResponse
 from models.response.auth.reset import \
     RequestResetPasswordOtpResponse, \
     VerifyResetPasswordOtpResponse, \
@@ -61,9 +65,10 @@ async def login_with_credential(cred: LoginWithCredentialForm, response: Respons
         if auth.verify_password(cred.password, user.password):
             if user.status:
                 access_token = auth.encode_token(user)
+                refresh_token = auth.encode_refresh_token(user)
                 return LoginWithCredentialResponse(
                     access_token=access_token,
-                    refresh_token=access_token
+                    refresh_token=refresh_token
                 )
             else:
                 response.status_code = status.HTTP_403_FORBIDDEN
@@ -169,9 +174,10 @@ async def login_with_phone(cred: LoginWithPhoneForm, response: Response):
                 await db.save(user)
 
                 access_token = auth.encode_token(user)
+                refresh_token = auth.encode_refresh_token(user)
                 return LoginWithCredentialResponse(
                     access_token=access_token,
-                    refresh_token=access_token
+                    refresh_token=refresh_token
                 )
             else:
                 response.status_code = status.HTTP_403_FORBIDDEN
@@ -330,4 +336,78 @@ async def reset_password(cred: ResetPasswordForm, response: Response):
     return ResetPasswordErrorResponse(
         loc=['reset', 'password', 'otp'],
         msg='No user found with the provided identity.'
+    )
+
+
+@api.post(
+    '/refresh-token',
+    description='Update access token by refresh token.',
+    responses={
+        200: {'model': LoginWithCredentialResponse, 'description': 'Logged in successfully'},
+        403: {'model': LoginErrorResponse, 'description': 'Credential mismatch or account disabled.'}
+    }
+)
+async def login_with_credential(cred: RefreshTokenForm, response: Response):
+    auth = Auth()
+    rt = auth.decode_refresh_token(cred.refresh_token)
+
+    if rt['user']['type'] == 'admin':
+        user = await db.find_one(Admin, Admin.id == ObjectId(rt['user']['id']))
+    else:
+        user = await db.find_one(Client, Client.id == ObjectId(rt['user']['id']))
+
+    if user is not None:
+        if user.status:
+            access_token = auth.encode_token(user)
+            if datetime.strptime(rt['expiry'], '%Y-%m-%d %H:%M:%S.%f') <= datetime.utcnow() + timedelta(days=10):
+                refresh_token = auth.encode_refresh_token(user)
+                return LoginWithCredentialResponse(
+                    access_token=access_token,
+                    refresh_token=refresh_token
+                )
+            else:
+                return LoginWithCredentialResponse(
+                    access_token=access_token,
+                    refresh_token=cred.refresh_token
+                )
+        else:
+            response.status_code = status.HTTP_403_FORBIDDEN
+            return LoginErrorResponse(
+                loc=['auth', 'login', 'credential'],
+                msg='Your account is disabled, Please contact administrator.'
+            )
+
+    response.status_code = status.HTTP_403_FORBIDDEN
+    return LoginErrorResponse(
+        loc=['auth', 'login', 'credential'],
+        msg='Invalid Refresh Token provided, Please try with correct one.'
+    )
+
+
+@api.get(
+    '/get-user-detail',
+    description='Get Logged in user details.',
+    responses={
+        200: {'model': LoggedInUserResponse, 'description': 'Logged in successfully'},
+        403: {'model': LoginErrorResponse, 'description': 'Credential mismatch or account disabled.'}
+    }
+)
+async def get_logged_in_user_detail(response: Response, token=Depends(Auth().wrapper)):
+    role = None
+    if token['user']['type'] == 'admin':
+        user = await db.find_one(Admin, Admin.id == ObjectId(token['user']['id']))
+        role = await db.find_one(Role, Role.id == ObjectId(token['user']['role']))
+    else:
+        user = await db.find_one(Client, Client.id == ObjectId(token['user']['id']))
+
+    if user is not None:
+        return LoggedInUserResponse(
+            user=user,
+            role=role
+        )
+
+    response.status_code = status.HTTP_403_FORBIDDEN
+    return LoginErrorResponse(
+        loc=['auth', 'login', 'credential'],
+        msg='Invalid Refresh Token provided, Please try with correct one.'
     )
