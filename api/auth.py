@@ -206,9 +206,10 @@ async def request_reset_password_otp(cred: RequestResetPasswordOtpForm, response
     if cred.method == 'email':
         user = await db.find_one(Admin, Admin.email == cred.identity)
         if user is None:
-            user = await db.find_one(Client, Client.phone == cred.identity)
+            user = await db.find_one(Client, Client.email == cred.identity)
+
     elif cred.method == 'phone':
-        user = await db.find_one(Admin, Admin.email == cred.identity)
+        user = await db.find_one(Admin, Admin.phone == cred.identity)
         if user is None:
             user = await db.find_one(Client, Client.phone == cred.identity)
 
@@ -226,12 +227,11 @@ async def request_reset_password_otp(cred: RequestResetPasswordOtpForm, response
                     msg='Otp sent to your {cred.method}'
                 )
         else:
-            reset_password = ResetPassword(
-                code='1234560',
+            user.reset_password = ResetPassword(
+                code='123456',
                 expiry=datetime.utcnow() + timedelta(minutes=10),
                 send_otp_to=cred.method
             )
-            user.reset_password = reset_password
             await db.save(user)
 
             return RequestResetPasswordOtpResponse(
@@ -260,7 +260,7 @@ async def verify_reset_password_otp(cred: VerifyResetPasswordOtpForm, response: 
         user = await db.find_one(Client, (Client.email == cred.identity) | (Client.phone == cred.identity))
 
     if user is not None:
-        if 'reset_password' in user:
+        if user.reset_password is not None:
             if user.reset_password.verified:
                 return VerifyResetPasswordOtpResponse(
                     loc=['request', 'reset', 'password', 'otp'],
