@@ -1,12 +1,14 @@
 from pydantic import BaseSettings
-import os
 
 
 class CommonSettings(BaseSettings):
     APP_NAME: str = 'Mondol International Accounting'
-    DEBUG_MODE: bool = True
     APP_SECRET: str = '671a862f961ae7b705db1a33480ade5ef31fd45476186164b6189471421bb0f0'
     APP_ALGORITHM: str = 'HS256'
+    DEBUG_MODE: bool = True
+    ENVIRONMENT: str = 'dev'
+    LOCAL_CURRENCY: str = 'BDT'
+    LOCAL_COUNTRY: str = 'BD'
 
 
 class ServerSettings(BaseSettings):

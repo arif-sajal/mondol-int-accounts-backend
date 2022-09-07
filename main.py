@@ -1,12 +1,12 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from api import demoData, auth, country, currency, role, admin
+from api import demoData, auth, country, currency, role, admin, client, account, local_transaction, foreign_transaction
 
 description = """
 
 ## Items
 
-_Authentication_, _Countries_, _Currencies_, _Roles_, _Admins_, _Clients_
+_Authentication_, _Countries_, _Currencies_, _Roles_, _Admins_, _Clients_, _Accounts_, _Local Transactions_, _Foreign Transactions_
 
 ## Authentication 🔐
 
@@ -28,48 +28,70 @@ _Authentication_, _Countries_, _Currencies_, _Roles_, _Admins_, _Clients_
 
 ## Currencies 💸
 
-* **Read Currencies** (Pagination) (_not implemented_).
-* **Read Single Currency** (_not implemented_).
-* **Create Currency** (_not implemented_).
-* **Update Currency** (_not implemented_).
-* **Delete Currency** (_not implemented_).
+* **Read Currencies** (Pagination) (_Implemented_).
+* **Read Currencies Options** (_Implemented_).
+* **Read Single Currency** (_Implemented_).
+* **Create Currency** (_Implemented_).
+* **Update Currency** (_Implemented_).
+* **Delete Currency** (_Implemented_).
 
 ## Role ⛹
 
-* **Read Roles** (Pagination) (_not implemented_).
-* **Read Single Role** (_not implemented_).
-* **Create Role** (_not implemented_).
-* **Update Role** (_not implemented_).
-* **Delete Role** (_not implemented_).
-* **Change Role Activation Status** (_not implemented_).
+* **Read Roles** (Pagination) (_Implemented_).
+* **Read Roles Options** (_Implemented_).
+* **Read Single Role** (_Implemented_).
+* **Create Role** (_Implemented_).
+* **Update Role** (_Implemented_).
+* **Delete Role** (_Implemented_).
+* **Change Role Activation Status** (_Implemented_).
 
 ## Admins
 
-* **Read Admins** (Pagination) (_not implemented_).
-* **Read Single Admin** (_not implemented_).
-* **Create Admin** (_not implemented_).
-* **Update Admin** (_not implemented_).
-* **Delete Admin** (_not implemented_).
-* **Change Admin Password** (_not implemented_).
-* **Change Admin Activation Status** (_not implemented_).
+* **Read Admins** (Pagination) (_Implemented_).
+* **Read Admins Options** (_Implemented_).
+* **Read Single Admin** (_Implemented_).
+* **Create Admin** (_Implemented_).
+* **Update Admin** (_Implemented_).
+* **Delete Admin** (_Implemented_).
+* **Change Admin Password** (_Implemented_).
+* **Change Admin Activation Status** (_Implemented_).
 
 ## Client
 
-* **Read Clients** (Pagination) (_not implemented_).
-* **Read Single Clients** (_not implemented_).
-* **Create Client** (_not implemented_).
-* **Update Client** (_not implemented_).
-* **Delete Client** (_not implemented_).
-* **Change Client Password** (_not implemented_).
-* **Change Client Status** (_not implemented_).
+* **Read Clients** (Pagination) (_Implemented_).
+* **Read Clients Options** (_Implemented_).
+* **Read Single Clients** (_Implemented_).
+* **Create Client** (_Implemented_).
+* **Update Client** (_Implemented_).
+* **Delete Client** (_Implemented_).
+* **Change Client Password** (_Implemented_).
+* **Change Client Activation Status** (_Implemented_).
 
 ## Accounts
 
-* **Read Accounts** (Pagination) (_not implemented_).
-* **Read Single Account** (_not implemented_).
-* **Create Account** (_not implemented_).
-* **Update Account** (_not implemented_).
-* **Delete Account** (_not implemented_).
+* **Read Accounts** (Pagination) (_Implemented_).
+* **Read Accounts Options** (_Implemented_).
+* **Read Single Account** (_Implemented_).
+* **Create Account** (_Implemented_).
+* **Update Account** (_Implemented_).
+* **Delete Account** (_Implemented_).
+* **Change Account Activation Status** (_Implemented_).
+
+## Local Transaction
+
+* **Read Local Transactions** (Pagination) (_Implemented_).
+* **Read Single Local Transaction** (_Implemented_).
+* **Create Local Transaction** (_Implemented_).
+* **Update Local Transaction** (_Implemented_).
+* **Delete Local Transaction** (_Implemented_).
+
+## Foreign Transaction
+
+* **Read Foreign Transaction** (Pagination) (_Implemented_).
+* **Read Single Foreign Transaction** (_Implemented_).
+* **Create Foreign Transaction** (_Implemented_).
+* **Update Foreign Transaction** (_Implemented_).
+* **Delete Foreign Transaction** (_Implemented_).
 """
 
 tags_metadata = [
@@ -105,6 +127,14 @@ tags_metadata = [
         "name": "Accounts",
         "description": "Operations with **Accounts**."
     },
+    {
+        "name": "Local Transaction",
+        "description": "Operations with **local transactions**."
+    },
+    {
+        "name": "Foreign Transaction",
+        "description": "Operations with **foreign transactions**."
+    }
 ]
 
 app = FastAPI(
@@ -136,3 +166,7 @@ app.include_router(country.api)
 app.include_router(currency.api)
 app.include_router(role.api)
 app.include_router(admin.api)
+app.include_router(client.api)
+app.include_router(account.api)
+app.include_router(local_transaction.api)
+app.include_router(foreign_transaction.api)

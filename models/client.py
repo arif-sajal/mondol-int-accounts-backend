@@ -3,11 +3,14 @@ from pydantic import EmailStr, FilePath
 from typing import Optional
 
 # Import Models
-from models.country import Country
-from models.auth import PhoneLogin, ResetPassword
+from .country import Country
+from .auth import PhoneLogin, ResetPassword
 
 # Import Utility Validators
 from validators.PhoneNumber import PhoneNumber
+
+# Import Utils
+import datetime
 
 
 class Client(Model):
@@ -21,6 +24,8 @@ class Client(Model):
     status: bool = Field(default=False)
     avatar: Optional[FilePath]
     country: Country = Reference()
+    created_at: datetime.datetime = Field(default_factory=datetime.datetime.utcnow)
+    updated_at: datetime.datetime = Field(default_factory=datetime.datetime.utcnow)
 
     class Config:
         collection = "clients"
@@ -34,6 +39,8 @@ class ClientOut(Model):
     status: bool = Field(default=False)
     avatar: Optional[FilePath]
     country: Country = Reference()
+    created_at: datetime.datetime = Field(default_factory=datetime.datetime.utcnow)
+    updated_at: datetime.datetime = Field(default_factory=datetime.datetime.utcnow)
 
     class Config:
         collection = "clients"

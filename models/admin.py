@@ -3,11 +3,14 @@ from pydantic import EmailStr, FilePath
 from typing import Optional
 
 # Import Models
-from models.role import Role
+from models.role import Role, RoleOut
 from models.auth import PhoneLogin, ResetPassword
 
 # Import Utility Validators
 from validators.PhoneNumber import PhoneNumber
+
+# Import Utils
+import datetime
 
 
 class Admin(Model):
@@ -21,6 +24,8 @@ class Admin(Model):
     status: bool = Field(default=False)
     avatar: Optional[FilePath]
     role: Role = Reference()
+    created_at: datetime.datetime = Field(default_factory=datetime.datetime.utcnow)
+    updated_at: datetime.datetime = Field(default_factory=datetime.datetime.utcnow)
 
     class Config:
         title = 'Main admin model for internal use.'
@@ -34,6 +39,9 @@ class AdminOut(Model):
     username: str
     status: bool = Field(default=False)
     avatar: Optional[FilePath]
+    role: RoleOut = Reference()
+    created_at: datetime.datetime = Field(default_factory=datetime.datetime.utcnow)
+    updated_at: datetime.datetime = Field(default_factory=datetime.datetime.utcnow)
 
     class Config:
         title = 'Admin model for external use.'

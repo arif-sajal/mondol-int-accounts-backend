@@ -1,3 +1,5 @@
+import datetime
+
 from fastapi import APIRouter, Response, status
 from odmantic.bson import ObjectId
 from typing import List
@@ -81,6 +83,7 @@ async def create_currency(cur: CurrencyForm, response: Response):
     currency = Currency(
         name=cur.name,
         code=cur.code,
+        symbol=cur.symbol,
         rate=cur.rate
     )
 
@@ -114,7 +117,9 @@ async def update_currency(cid: ObjectId, cou: CurrencyForm, response: Response):
     if currency is not None:
         currency.name = cou.name
         currency.code = cou.code
+        currency.symbol = cou.symbol
         currency.rate = cou.rate
+        currency.updated_at = datetime.datetime.utcnow()
 
         try:
             await db.save(currency)

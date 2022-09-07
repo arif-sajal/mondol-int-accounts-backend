@@ -82,6 +82,50 @@ modules = [
         ]
     },
     {
+        'name': 'foreign_transaction',
+        'label': 'Foreign Transaction',
+        'permissions': [
+            {
+                'name': 'create',
+                'label': 'Create',
+            },
+            {
+                'name': 'read',
+                'label': 'Read',
+            },
+            {
+                'name': 'update',
+                'label': 'Update',
+            },
+            {
+                'name': 'delete',
+                'label': 'Delete',
+            }
+        ]
+    },
+    {
+        'name': 'local_transaction',
+        'label': 'Local Transaction',
+        'permissions': [
+            {
+                'name': 'create',
+                'label': 'Create',
+            },
+            {
+                'name': 'read',
+                'label': 'Read',
+            },
+            {
+                'name': 'update',
+                'label': 'Update',
+            },
+            {
+                'name': 'delete',
+                'label': 'Delete',
+            }
+        ]
+    },
+    {
         'name': 'country',
         'label': 'Country',
         'permissions': [
@@ -199,6 +243,8 @@ class Role:
 
         return RoleModel(
             name='Super Admin',
+            description='Some Description',
+            status=True,
             modules=module_list
         )
 
@@ -220,6 +266,8 @@ class Role:
 
         return RoleModel(
             name=fake.job(),
+            description=fake.sentence(nb_words=10),
+            status=fake.pybool(),
             modules=module_list
         )
 

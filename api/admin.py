@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Response, status, UploadFile, File
+from fastapi import APIRouter, Response, status
 from odmantic.bson import ObjectId
 from typing import List
 
@@ -20,6 +20,9 @@ from validators.form.roleExists import role_exists
 # Import Responses
 from models.response.admin import AdminsPaginatedResults, AdminResponse
 from models.response.common import ErrorResponse, NotFound
+
+# Import Utils
+import datetime
 
 api = APIRouter(
     prefix='/v1/admin',
@@ -60,14 +63,14 @@ async def get_admin_options(query: str = ''):
     }
 )
 async def get_single_admin(aid: ObjectId, response: Response):
-    admin = await db.find_one(AdminOut, AdminOut.id == aid)
+    admin = await db.find_one(Admin, Admin.id == aid)
     if admin is not None:
-        return admin
+        return AdminOut(**admin.dict())
 
     response.status_code = status.HTTP_404_NOT_FOUND
     return NotFound(
         loc=['get', 'single', 'admin'],
-        msg='Country Not Found'
+        msg='Admin Not Found'
     )
 
 
@@ -81,12 +84,6 @@ async def get_single_admin(aid: ObjectId, response: Response):
 )
 async def create_admin(caf: CreateAdminForm, response: Response):
     role = await role_exists(caf.role)
-    if role is False:
-        response.status_code = status.HTTP_403_FORBIDDEN
-        return ErrorResponse(
-            loc=['body', 'role'],
-            msg='Invalid Role Selected.'
-        )
 
     auth = Auth()
     admin = Admin(
@@ -115,7 +112,7 @@ async def create_admin(caf: CreateAdminForm, response: Response):
 
 @api.patch(
     '/update/{aid}',
-    description='Update country.',
+    description='Update admin.',
     responses={
         200: {'model': AdminResponse},
         403: {'model': ErrorResponse},
@@ -123,20 +120,16 @@ async def create_admin(caf: CreateAdminForm, response: Response):
     }
 )
 async def update_admin(aid: ObjectId, uaf: UpdateAdminForm, response: Response):
-    if not await role_exists(uaf.role):
-        response.status_code = status.HTTP_403_FORBIDDEN
-        return ErrorResponse(
-            loc=['body', 'role'],
-            msg='Invalid Role Selected.'
-        )
-
+    role = await role_exists(uaf.role)
     admin = await db.find_one(Admin, Admin.id == aid)
 
     if admin is not None:
-        admin.name = uaf.name,
-        admin.email = uaf.email,
-        admin.phone = uaf.phone,
-        admin.username = uaf.username,
+        admin.name = uaf.name
+        admin.email = uaf.email
+        admin.phone = uaf.phone
+        admin.username = uaf.username
+        admin.role = role
+        admin.updated_at = datetime.datetime.utcnow()
 
         try:
             await db.save(admin)
@@ -150,6 +143,78 @@ async def update_admin(aid: ObjectId, uaf: UpdateAdminForm, response: Response):
             return ErrorResponse(
                 loc=['update', 'admin', 'error'],
                 msg='Can\'t update admin now, Please try again or contact administrator'
+            )
+
+    response.status_code = status.HTTP_404_NOT_FOUND
+    return NotFound(
+        loc=['admin', 'not', 'found'],
+        msg='Admin not found with the provided ID.'
+    )
+
+
+@api.patch(
+    '/change-password/{aid}',
+    description='Change admin password.',
+    responses={
+        200: {'model': AdminResponse},
+        403: {'model': ErrorResponse},
+        404: {'model': NotFound}
+    }
+)
+async def change_admin_password(aid: ObjectId, cap: ChangeAdminPasswordForm, response: Response):
+    auth = Auth()
+    admin = await db.find_one(Admin, Admin.id == aid)
+
+    if admin is not None:
+        admin.password = auth.encode_password(cap.password)
+        try:
+            await db.save(admin)
+            return AdminResponse(
+                loc=['update', 'admin', 'success'],
+                msg='Admin password changed successfully.',
+                data=AdminOut(**admin.dict())
+            )
+        except():
+            response.status_code = status.HTTP_403_FORBIDDEN
+            return ErrorResponse(
+                loc=['update', 'admin', 'error'],
+                msg='Can\'t update admin now, Please try again or contact administrator'
+            )
+
+    response.status_code = status.HTTP_404_NOT_FOUND
+    return NotFound(
+        loc=['admin', 'not', 'found'],
+        msg='Admin not found with the provided ID.'
+    )
+
+
+@api.get(
+    '/change-status/{aid}',
+    description='Change admin password.',
+    responses={
+        200: {'model': AdminResponse},
+        403: {'model': ErrorResponse},
+        404: {'model': NotFound}
+    }
+)
+async def change_admin_status(aid: ObjectId, response: Response):
+    admin = await db.find_one(Admin, Admin.id == aid)
+
+    if admin is not None:
+        admin.status = not admin.status
+
+        try:
+            await db.save(admin)
+            return AdminResponse(
+                loc=['update', 'admin', 'success'],
+                msg='Admin status changed successfully.',
+                data=AdminOut(**admin.dict())
+            )
+        except():
+            response.status_code = status.HTTP_403_FORBIDDEN
+            return ErrorResponse(
+                loc=['update', 'admin', 'error'],
+                msg='Can\'t change admin status now, Please try again or contact administrator'
             )
 
     response.status_code = status.HTTP_404_NOT_FOUND

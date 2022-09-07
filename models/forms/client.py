@@ -7,32 +7,32 @@ from validators.form.notEmpty import not_empty
 from validators.form.matchConfirmPassword import match_confirm_password
 
 
-class CreateAdminForm(BaseBSONModel):
+class CreateClientForm(BaseBSONModel):
     name: str
     email: EmailStr
     phone: PhoneNumber
     username: str
     password: str
     confirm_password: str
-    role: ObjectId
+    country: ObjectId
 
     # Validators
-    _non_empty_fields = validator('name', 'email', 'phone', 'username', 'password', 'confirm_password', 'role', allow_reuse=True)(not_empty)
+    _non_empty_fields = validator('name', 'email', 'phone', 'username', 'password', 'confirm_password', 'country', allow_reuse=True)(not_empty)
     _match_confirm_password = validator('confirm_password', allow_reuse=True)(match_confirm_password)
 
 
-class UpdateAdminForm(BaseBSONModel):
+class UpdateClientForm(BaseBSONModel):
     name: str
     email: EmailStr
     phone: PhoneNumber
     username: str
-    role: ObjectId
+    country: ObjectId
 
     # Validators
-    _non_empty_fields = validator('name', 'email', 'phone', 'username', 'role', allow_reuse=True)(not_empty)
+    _non_empty_fields = validator('name', 'email', 'phone', 'username', 'country', allow_reuse=True)(not_empty)
 
 
-class ChangeAdminPasswordForm(BaseBSONModel):
+class ChangeClientPasswordForm(BaseBSONModel):
     password: str
     confirm_password: str
 

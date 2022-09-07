@@ -1,4 +1,6 @@
-from fastapi import APIRouter, Response, status
+import datetime
+
+from fastapi import APIRouter, Response, status, Depends
 from odmantic.bson import ObjectId
 from typing import List
 
@@ -11,6 +13,7 @@ from helpers.database import db
 from helpers.pagination import prepare_result, PaginationParameters
 from helpers.options import make as make_options
 from helpers.role import Role as RoleHelper
+from helpers.auth import Auth
 
 # Import Forms
 from models.forms.role import RoleForm
@@ -23,7 +26,8 @@ from models.response.common import ErrorResponse, NotFound
 
 api = APIRouter(
     prefix='/v1/role',
-    tags=["Roles"]
+    tags=["Roles"],
+    dependencies=[Depends(Auth().wrapper)]
 )
 
 
@@ -83,6 +87,7 @@ async def create_role(rof: RoleForm, response: Response):
     modules = RoleHelper().get_prepared_modules_from_model(rof.modules)
     role = Role(
         name=rof.name,
+        description=rof.description,
         modules=modules
     )
 
@@ -116,7 +121,9 @@ async def update_role(rid: ObjectId, rof: RoleForm, response: Response):
     if role is not None:
         modules = RoleHelper().get_prepared_modules_from_model(rof.modules)
         role.name = rof.name
+        role.description = rof.description
         role.modules = modules
+        role.updated_at = datetime.datetime.utcnow()
 
         try:
             await db.save(role)
@@ -139,8 +146,44 @@ async def update_role(rid: ObjectId, rof: RoleForm, response: Response):
     )
 
 
+@api.get(
+    '/change-status/{rid}',
+    description='Change role activation status.',
+    responses={
+        200: {'model': RoleResponse},
+        403: {'model': ErrorResponse},
+        404: {'model': NotFound}
+    }
+)
+async def change_role_activation_status(rid: ObjectId, response: Response):
+    role = await db.find_one(Role, Role.id == rid)
+
+    if role is not None:
+        role.active = not role.active
+
+        try:
+            await db.save(role)
+            return RoleResponse(
+                loc=['update', 'role', 'success'],
+                msg='Role status changed successfully.',
+                data=role
+            )
+        except():
+            response.status_code = status.HTTP_403_FORBIDDEN
+            return ErrorResponse(
+                loc=['update', 'role', 'error'],
+                msg='Can\'t change role status now, Please try again or contact administrator'
+            )
+
+    response.status_code = status.HTTP_404_NOT_FOUND
+    return NotFound(
+        loc=['role', 'not', 'found'],
+        msg='Role not found with the provided ID.'
+    )
+
+
 @api.delete(
-    '/delete/{cid}',
+    '/delete/{rid}',
     description='Delete Role.',
     responses={
         200: {'model': RoleResponse},
@@ -150,14 +193,13 @@ async def update_role(rid: ObjectId, rof: RoleForm, response: Response):
 )
 async def delete_role(rid: ObjectId, response: Response):
     role = await db.find_one(Role, Role.id == rid)
-
     if role is not None:
         admins = len(await db.find(Admin, Admin.role == role.id))
         if admins > 0:
             response.status_code = status.HTTP_403_FORBIDDEN
             return ErrorResponse(
                 loc=['delete', 'role', 'error'],
-                msg=f'Can\'t delete this role, {admins} Admins exists by this role.'
+                msg=f'Can\'t delete this role, {admins} Admins exists on this role.'
             )
         else:
             try:

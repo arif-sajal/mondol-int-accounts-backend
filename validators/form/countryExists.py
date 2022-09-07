@@ -4,12 +4,12 @@ from fastapi import HTTPException, status
 from helpers.database import db
 
 # Import Models
-from models.role import Role
+from models.country import Country
 
 
-async def role_exists(rid):
-    role = await db.find_one(Role, Role.id == rid)
-    if role is None:
+async def country_exists(cid):
+    country = await db.find_one(Country, Country.id == cid)
+    if country is None:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=[
@@ -20,4 +20,4 @@ async def role_exists(rid):
                 )
             ]
         )
-    return role
+    return country
