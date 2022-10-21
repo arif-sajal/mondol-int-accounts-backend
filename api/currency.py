@@ -1,8 +1,7 @@
-import datetime
-
-from fastapi import APIRouter, Response, status
+from fastapi import APIRouter, Response, status, Depends
 from odmantic.bson import ObjectId
 from typing import List
+from settings import settings
 
 # Import Models
 from models.currency import Currency
@@ -11,9 +10,10 @@ from models.currency import Currency
 from helpers.database import db
 from helpers.pagination import prepare_result, PaginationParameters
 from helpers.options import make as make_options
+from helpers.auth import Auth
 
 # Import Forms
-from models.forms.currency import CurrencyForm
+from models.forms.currency import CreateCurrencyForm, UpdateCurrencyForm
 
 # Import Responses
 from models.response.currency import \
@@ -21,9 +21,14 @@ from models.response.currency import \
     CurrencyResponse
 from models.response.common import ErrorResponse, NotFound
 
+# Import Utils
+import datetime
+
+
 api = APIRouter(
     prefix='/v1/currency',
-    tags=["Currencies"]
+    tags=["Currencies"],
+    dependencies=[Depends(Auth().wrapper)]
 )
 
 
@@ -71,6 +76,26 @@ async def get_single_currency(cid: ObjectId, response: Response):
     )
 
 
+@api.get(
+    '/get-default',
+    description='Get Default currency.',
+    responses={
+        200: {'model': Currency},
+        404: {'model': NotFound}
+    }
+)
+async def get_deFault_currency(response: Response):
+    currency = await db.find_one(Currency, Currency.code == settings.LOCAL_CURRENCY)
+    if currency is not None:
+        return currency
+
+    response.status_code = status.HTTP_404_NOT_FOUND
+    return NotFound(
+        loc=['get', 'default', 'currency'],
+        msg='Currency Not Found'
+    )
+
+
 @api.post(
     '/create',
     description='Create new currency.',
@@ -79,7 +104,7 @@ async def get_single_currency(cid: ObjectId, response: Response):
         403: {'model': ErrorResponse}
     }
 )
-async def create_currency(cur: CurrencyForm, response: Response):
+async def create_currency(cur: CreateCurrencyForm, response: Response):
     currency = Currency(
         name=cur.name,
         code=cur.code,
@@ -111,7 +136,7 @@ async def create_currency(cur: CurrencyForm, response: Response):
         404: {'model': NotFound}
     }
 )
-async def update_currency(cid: ObjectId, cou: CurrencyForm, response: Response):
+async def update_currency(cid: ObjectId, cou: UpdateCurrencyForm, response: Response):
     currency = await db.find_one(Currency, Currency.id == cid)
 
     if currency is not None:
@@ -156,6 +181,13 @@ async def delete_currency(cid: ObjectId, response: Response):
 
     if currency is not None:
         try:
+            if currency.code == settings.LOCAL_CURRENCY:
+                response.status_code = status.HTTP_403_FORBIDDEN
+                return ErrorResponse(
+                    loc=['delete', 'currency', 'error'],
+                    msg='Can\'t delete system default currency.'
+                )
+
             await db.delete(currency)
             return CurrencyResponse(
                 loc=['delete', 'currency', 'success'],

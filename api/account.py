@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Response, status
+from fastapi import APIRouter, Response, status, Depends
 from odmantic.bson import ObjectId
 from typing import List
 
@@ -6,15 +6,13 @@ from typing import List
 from models.account import Account
 
 # Import Helpers
+from helpers.auth import Auth
 from helpers.database import db
 from helpers.pagination import prepare_result, PaginationParameters
 from helpers.options import make as make_options
 
 # Import Forms
 from models.forms.account import AccountForm
-
-# Import Validators
-from validators.form.currencyExists import currency_exists
 
 # Import Responses
 from models.response.account import AccountsPaginatedResults, AccountResponse
@@ -25,7 +23,8 @@ import datetime
 
 api = APIRouter(
     prefix='/v1/account',
-    tags=["Accounts"]
+    tags=["Accounts"],
+    dependencies=[Depends(Auth().wrapper)],
 )
 
 
@@ -82,12 +81,9 @@ async def get_single_account(aid: ObjectId, response: Response):
     }
 )
 async def create_account(af: AccountForm, response: Response):
-    currency = await currency_exists(af.currency)
-
     account = Account(
         name=af.name,
         description=af.description,
-        currency=currency,
         balance=af.balance,
     )
 
@@ -117,12 +113,10 @@ async def create_account(af: AccountForm, response: Response):
 )
 async def update_account(aid: ObjectId, uaf: AccountForm, response: Response):
     account = await db.find_one(Account, Account.id == aid)
-    currency = await currency_exists(uaf.currency)
 
     if account is not None:
         account.name = uaf.name
         account.description = uaf.description
-        account.currency = currency
         account.updated_at = datetime.datetime.utcnow()
 
         try:
@@ -163,7 +157,6 @@ async def change_account_status(aid: ObjectId, response: Response):
 
         try:
             await db.save(account)
-            print(account)
             return AccountResponse(
                 loc=['account', 'status', 'change', 'success'],
                 msg='Account status changed successfully.',

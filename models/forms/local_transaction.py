@@ -3,19 +3,22 @@ from odmantic.bson import BaseBSONModel, ObjectId
 from typing import Optional
 
 # Import Models
-from models import TransactionType, TransactionReferenceType
+from models import TransactionType
 
 # Import Validators
 from validators.form.notEmpty import not_empty
 
 
 class LocalTransactionForm(BaseBSONModel):
+    client: ObjectId
     amount: float
     type: TransactionType
-    reference_type: TransactionReferenceType
-    reference: ObjectId
+    account: ObjectId
     note: Optional[str]
+    ad_rate: Optional[float]
+    ad_amount: Optional[float]
     remark: Optional[str]
+    created_at: Optional[str]
 
     # Validators
-    _non_empty_fields = validator('type', 'reference_type', allow_reuse=True)(not_empty)
+    _non_empty_fields = validator('type', 'account', 'client', 'amount', allow_reuse=True)(not_empty)

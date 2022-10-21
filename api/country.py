@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Response, status
+from fastapi import APIRouter, Response, status, Depends
 from odmantic.bson import ObjectId
 from typing import List
 
@@ -10,6 +10,7 @@ from models.client import Client
 from helpers.database import db
 from helpers.pagination import prepare_result, PaginationParameters
 from helpers.options import make as make_options
+from helpers.auth import Auth
 
 # Import Forms
 from models.forms.country import CountryForm
@@ -22,7 +23,8 @@ from models.response.common import ErrorResponse, NotFound
 
 api = APIRouter(
     prefix='/v1/country',
-    tags=["Countries"]
+    tags=["Countries"],
+    dependencies=[Depends(Auth().wrapper)]
 )
 
 

@@ -4,13 +4,12 @@ from fastapi import APIRouter
 from settings import settings
 
 # Import Models
-from models import TransactionType, TransactionReferenceType
+from models import TransactionType
 from models.country import Country
 from models.currency import Currency
 from models.role import Role
 from models.admin import Admin
 from models.client import Client
-from models.balance import Balance
 from models.account import Account
 from models.local_transaction import LocalTransaction
 from models.foreign_transaction import ForeignTransaction
@@ -20,22 +19,18 @@ from models.response.demoData import DemoDataResponse
 from helpers.auth import Auth
 from helpers.database import db
 from helpers.role import Role as RoleHelper
-from helpers.balance import Balance as BalanceHelp
 
 # Import Utils
 from faker import Faker
 
-
 api = APIRouter(
     prefix='/v1/demo-data',
-    tags=["Demo Data"],
-    dependencies=[]
+    tags=["Demo Data"]
 )
 
 
 @api.get('/purge', response_model=DemoDataResponse, description='Delete all data from database.')
 async def purge_database():
-
     admins = await db.find(Admin)
     for admin in admins:
         await db.delete(admin)
@@ -44,16 +39,14 @@ async def purge_database():
     for role in roles:
         await db.delete(role)
 
-    balances = await db.find(Balance)
-    for balance in balances:
-        await db.delete(balance)
-
     local_transactions = await db.find(LocalTransaction)
     for lt in local_transactions:
+        await lt.delete_ledger()
         await db.delete(lt)
 
     foreign_transactions = await db.find(ForeignTransaction)
     for ft in foreign_transactions:
+        await ft.delete_ledger()
         await db.delete(ft)
 
     clients = await db.find(Client)
@@ -75,7 +68,8 @@ async def purge_database():
     return {'loc': ['demo-data', 'purge'], 'msg': 'Database Purged Successfully.'}
 
 
-@api.get('/import-countries', response_model=DemoDataResponse, description='Delete previous Countries and import new countries.')
+@api.get('/import-countries', response_model=DemoDataResponse,
+         description='Delete previous Countries and import new countries.')
 async def import_countries():
     prev_countries = await db.find(Country)
     for country in prev_countries:
@@ -91,16 +85,17 @@ async def import_countries():
     return {'loc': ['demo-data', 'countries'], 'msg': 'Countries Imported Successfully'}
 
 
-@api.get('/import-currencies', response_model=DemoDataResponse, description='Delete previous currencies and import new currencies.')
+@api.get('/import-currencies', response_model=DemoDataResponse,
+         description='Delete previous currencies and import new currencies.')
 async def import_currencies():
     prev_currencies = await db.find(Currency)
     for currency in prev_currencies:
         await db.delete(currency)
 
     countries = [
-        Currency(name='Bangladeshi Taka', code="BDT", rate=0.00, symbol='৳'),
-        Currency(name='Indian Rupee', code="INR", rate=0.88, symbol='₹'),
-        Currency(name='United Arab Emirates Dirham', code="AED", rate=0.042, symbol='د.إ')
+        Currency(name='Bangladeshi Taka', code="BDT", rate=1.00, symbol='৳'),
+        Currency(name='Indian Rupee', code="INR", rate=0.77, symbol='₹'),
+        Currency(name='United Arab Emirates Dirham', code="AED", rate=0.035, symbol='د.إ')
     ]
 
     await db.save_all(countries)
@@ -147,47 +142,31 @@ async def import_admins():
     return {'loc': ['demo-data', 'admins'], 'msg': 'Admins Imported Successfully'}
 
 
-@api.get('/import-clients', response_model=DemoDataResponse, description='Delete previous Clients and import new clients.')
+@api.get('/import-clients', response_model=DemoDataResponse,
+         description='Delete previous Clients and import new clients.')
 async def import_clients():
     prev_clients = await db.find(Client)
     for client in prev_clients:
         await db.delete(client)
 
-    first_country = await db.find_one(Country)
-    second_country = await db.find_one(Country)
+    country = await db.find_one(Country)
+    first_currency = await db.find_one(Currency, Currency.code == 'BDT')
+    second_currency = await db.find_one(Currency, Currency.code == 'INR')
     auth = Auth()
 
     clients = [
-        Client(name='Client', email="client@client.com", phone='+8801908088977', username='client', password=auth.encode_password('123456'), status=True, country=first_country),
-        Client(name='Arif Sajal', email="sajalarifulislam@gmail.com", phone='+8801954465596', username='arifsajal', password=auth.encode_password('123456'), status=True, country=second_country),
+        Client(name='Client', email="client@client.com", phone='+8801908088977', username='client',
+               password=auth.encode_password('123456'), status=True, country=country, currency=first_currency),
+        Client(name='Arif Sajal', email="sajalarifulislam@gmail.com", phone='+8801954465596', username='arifsajal',
+               password=auth.encode_password('123456'), status=True, country=country, currency=second_currency),
     ]
 
     await db.save_all(clients)
     return {'loc': ['demo-data', 'clients'], 'msg': 'Clients Imported Successfully'}
 
 
-@api.get('/import-balances', response_model=DemoDataResponse, description='Delete previous balances and import new balances.')
-async def import_balances():
-    prev_balances = await db.find(Balance)
-    for balance in prev_balances:
-        await db.delete(balance)
-
-    if settings.ENVIRONMENT == 'dev':
-        balances = list()
-        clients = await db.find(Client)
-        currencies = await db.find(Currency)
-        for client in clients:
-            for currency in currencies:
-                balances.append(Balance(
-                    client=client,
-                    currency=currency
-                ))
-        await db.save_all(balances)
-
-    return {'loc': ['demo-data', 'balances'], 'msg': 'Balances Imported Successfully'}
-
-
-@api.get('/import-accounts', response_model=DemoDataResponse, description='Delete previous Accounts and import new accounts.')
+@api.get('/import-accounts', response_model=DemoDataResponse,
+         description='Delete previous Accounts and import new accounts.')
 async def import_accounts():
     prev_accounts = await db.find(Account)
     for account in prev_accounts:
@@ -196,12 +175,10 @@ async def import_accounts():
     if settings.ENVIRONMENT == 'dev':
         fake = Faker()
         accounts = list()
-        currencies = await db.find(Currency)
-        for _ in range(15):
+        for _ in range(5):
             accounts.append(Account(
                 name=fake.catch_phrase(),
                 description=fake.credit_card_full(),
-                currency=fake.random_element(elements=currencies),
                 balance=fake.pyfloat(positive=True)
             ))
         await db.save_all(accounts)
@@ -209,7 +186,8 @@ async def import_accounts():
     return {'loc': ['demo-data', 'accounts'], 'msg': 'Accounts Imported Successfully'}
 
 
-@api.get('/import-local-transactions', response_model=DemoDataResponse, description='Delete previous Local Transactions and import new local transactions.')
+@api.get('/import-local-transactions', response_model=DemoDataResponse,
+         description='Delete previous Local Transactions and import new local transactions.')
 async def import_local_transactions():
     prev_local_transactions = await db.find(LocalTransaction)
     for lc in prev_local_transactions:
@@ -218,51 +196,55 @@ async def import_local_transactions():
     if settings.ENVIRONMENT == 'dev':
         fake = Faker()
         transactions = list()
-        clients = await db.find(Client)
         accounts = await db.find(Account)
-        reference_types = TransactionReferenceType
+        clients = await db.find(Client)
         transaction_types = TransactionType
-        local_currency = await db.find_one(Currency, Currency.code == settings.LOCAL_CURRENCY)
+        to_currency = await db.find_one(Currency, Currency.code == settings.LOCAL_CURRENCY)
 
         for _ in range(250):
-            rf_type = fake.random_element(elements=reference_types)
             tr_type = fake.random_element(elements=transaction_types)
-            rf = rf_type == TransactionReferenceType.ACCOUNT and fake.random_element(elements=accounts) or fake.random_element(elements=clients)
-            amount = fake.pyfloat(positive=True, min_value=500, max_value=1000000)
+            account = fake.random_element(elements=accounts)
+            client = fake.random_element(elements=clients)
+            amount = fake.pyint(min_value=500, max_value=1000000)
+            ad_rate = round(client.currency.rate / to_currency.rate, 3)
+            ad_amount = round(ad_rate * amount)
+
+            client_balance = 0
+            client_ad_balance = 0
+
+            if tr_type == TransactionType.PAID:
+                client_balance = client.balance + amount
+                client_ad_balance = client.ad_balance + ad_amount
+
+            if tr_type == TransactionType.RECEIVED:
+                client_balance = client.balance - amount
+                client_ad_balance = client.ad_balance - ad_amount
 
             transactions.append(LocalTransaction(
                 amount=amount,
                 type=tr_type,
-                reference_type=rf_type,
-                reference=rf.id,
-                note=fake.paragraph(),
-                remark=fake.paragraph(),
-                created_at=datetime.datetime.now()
+                account=account,
+                client=client,
+                ad_currency=client.currency,
+                ad_rate=ad_rate,
+                ad_amount=ad_amount,
+                client_balance=client_balance,
+                client_ad_balance=client_ad_balance,
+                note=fake.text(max_nb_chars=25),
+                remark=fake.text(max_nb_chars=25)
             ))
 
-            if rf_type == TransactionReferenceType.ACCOUNT:
-                account = rf
-                if tr_type == TransactionType.PAID:
-                    account.balance = account.balance - amount
-                else:
-                    account.balance = account.balance + amount
-                await db.save(account)
-
-            elif rf_type == TransactionReferenceType.CLIENT:
-                balance = await BalanceHelp(client=rf, currency=local_currency).get()
-
-                if tr_type == TransactionType.PAID:
-                    balance.balance = balance.balance - amount
-                else:
-                    balance.balance = balance.balance + amount
-                await db.save(balance)
-
         await db.save_all(transactions)
+
+        transactions = await db.find(LocalTransaction)
+        for transaction in transactions:
+            await transaction.create_ledger()
 
     return {'loc': ['demo-data', 'accounts'], 'msg': 'Local Transactions Imported Successfully'}
 
 
-@api.get('/import-foreign-transactions', response_model=DemoDataResponse, description='Delete previous Foreign Transactions and import new foreign transactions.')
+@api.get('/import-foreign-transactions', response_model=DemoDataResponse,
+         description='Delete previous Foreign Transactions and import new foreign transactions.')
 async def import_foreign_transactions():
     prev_foreign_transactions = await db.find(ForeignTransaction)
     for fc in prev_foreign_transactions:
@@ -272,59 +254,67 @@ async def import_foreign_transactions():
         fake = Faker()
         transactions = list()
         clients = await db.find(Client)
-        accounts = await db.find(Account)
-        reference_types = TransactionReferenceType
         transaction_types = TransactionType
-        from_currencies = await db.find(Currency, Currency.code == settings.LOCAL_CURRENCY)
+        currencies = await db.find(Currency, Currency.code != settings.LOCAL_CURRENCY)
+        to_currency = await db.find_one(Currency, Currency.code == settings.LOCAL_CURRENCY)
 
         for _ in range(250):
-            rf_type = fake.random_element(elements=reference_types)
             tr_type = fake.random_element(elements=transaction_types)
-            rf = rf_type == TransactionReferenceType.ACCOUNT and fake.random_element(elements=accounts) or fake.random_element(elements=clients)
-            from_currency = fake.random_element(elements=from_currencies)
-            to_currencies = await db.find(Currency, Currency.id != from_currency.id)
-            to_currency = fake.random_element(elements=to_currencies)
+            client = fake.random_element(elements=clients)
+            from_currency = fake.random_element(elements=currencies)
 
-            rate = fake.pyfloat(positive=True, min_value=1.25, max_value=120)
-            amount = fake.pyfloat(positive=True, min_value=500, max_value=1000000)
+            rate = round(to_currency.rate / from_currency.rate, 3)
+            amount = fake.pyint(min_value=500, max_value=1000000)
+            cv_amount = round(amount * rate, 2)
+
+            if client.currency.id != to_currency.id:
+                ad_currency = client.currency
+                ad_rate = round(ad_currency.rate / to_currency.rate, 3)
+                ad_cv_amount = round(cv_amount * ad_rate, 3)
+            else:
+                ad_currency = to_currency
+                ad_rate = 1.00
+                ad_cv_amount = cv_amount
+
+            client_balance = 0
+            client_ad_balance = 0
+
+            if tr_type == TransactionType.PAID:
+                client_balance = client.balance + cv_amount
+                client_ad_balance = client.ad_balance + ad_cv_amount
+
+            if tr_type == TransactionType.RECEIVED:
+                client_balance = client.balance - cv_amount
+                client_ad_balance = client.ad_balance - ad_cv_amount
 
             transactions.append(ForeignTransaction(
                 from_currency=from_currency,
                 to_currency=to_currency,
                 rate=rate,
                 amount=amount,
-                cv_amount=amount * rate,
+                cv_amount=round(amount * rate, 2),
                 type=tr_type,
-                reference_type=rf_type,
-                reference=rf.id,
-                note=fake.paragraph(),
-                remark=fake.paragraph(),
-                created_at=datetime.datetime.now()
+                client=client,
+                ad_currency=ad_currency,
+                ad_rate=ad_rate,
+                ad_cv_amount=ad_cv_amount,
+                client_balance=client_balance,
+                client_ad_balance=client_ad_balance,
+                note=fake.text(max_nb_chars=25),
+                remark=fake.text(max_nb_chars=25)
             ))
 
-            if rf_type == TransactionReferenceType.ACCOUNT:
-                account = rf
-                if tr_type == TransactionType.PAID:
-                    account.balance = account.balance - amount
-                else:
-                    account.balance = account.balance + amount
-                await db.save(account)
-
-            elif rf_type == TransactionReferenceType.CLIENT:
-                balance = await BalanceHelp(client=rf, currency=to_currency).get()
-
-                if tr_type == TransactionType.PAID:
-                    balance.balance = balance.balance - amount
-                else:
-                    balance.balance = balance.balance + amount
-                await db.save(balance)
-
         await db.save_all(transactions)
+
+        transactions = await db.find(ForeignTransaction)
+        for transaction in transactions:
+            await transaction.create_ledger()
 
     return {'loc': ['demo-data', 'accounts'], 'msg': 'Foreign Transactions Imported Successfully'}
 
 
-@api.get('/reset', response_model=DemoDataResponse, description='Delete all data from database and re import all data again.')
+@api.get('/reset', response_model=DemoDataResponse,
+         description='Delete all data from database and re import all data again.')
 async def full_database_reset():
     await purge_database()
     await import_countries()
@@ -332,7 +322,6 @@ async def full_database_reset():
     await import_roles()
     await import_admins()
     await import_clients()
-    await import_balances()
     await import_accounts()
     await import_local_transactions()
     await import_foreign_transactions()

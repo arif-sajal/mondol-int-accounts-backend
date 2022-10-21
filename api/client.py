@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Response, status
+from fastapi import APIRouter, Response, status, Depends
 from odmantic.bson import ObjectId
 from typing import List
 
@@ -26,7 +26,8 @@ import datetime
 
 api = APIRouter(
     prefix='/v1/client',
-    tags=["Clients"]
+    tags=["Clients"],
+    dependencies=[Depends(Auth().wrapper)]
 )
 
 

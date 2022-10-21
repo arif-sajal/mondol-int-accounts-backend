@@ -23,7 +23,14 @@ class DatabaseSettings(BaseSettings):
     DB_NAME: str = 'mi-back'
 
 
-class Settings(CommonSettings, ServerSettings, DatabaseSettings):
+class SMSAPI(BaseSettings):
+    SMS_API_HOST: str = 'https://api.sms.net.bd/'
+    SMS_API_SENDING_PATH: str = 'sendsms'
+    SMS_API_REPORT_PATH: str = 'report/request/'
+    SMS_API_KEY: str = 'IBuuUV9DRNVN5aIo44dgFNdrLvWPnC4LsnYFBp00'
+
+
+class Settings(CommonSettings, ServerSettings, DatabaseSettings, SMSAPI):
     pass
 
 

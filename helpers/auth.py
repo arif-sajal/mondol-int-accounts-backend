@@ -3,6 +3,10 @@ from fastapi import HTTPException, Security
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from passlib.context import CryptContext
 from typing import Union
+from odmantic import ObjectId
+
+# Import Helpers
+from helpers.database import db
 
 # Import Models
 from models.admin import Admin
@@ -14,6 +18,15 @@ from settings import settings
 # Import Utilities
 from datetime import datetime, timedelta
 import jwt
+
+
+async def get_user(user_id, user_type):
+    user = None
+    if user_type == 'admin':
+        user = await db.find_one(Admin, Admin.id == user_id)
+    if user_type == 'client':
+        user = await db.find_one(Client, Client.id == user_id)
+    return user
 
 
 class Auth:
@@ -45,7 +58,8 @@ class Auth:
     def decode_token(self, token: str):
         try:
             d_token = jwt.decode(token, self.secret, algorithms=[self.algorithm])
-            return d_token if datetime.strptime(d_token['expiry'], '%Y-%m-%d %H:%M:%S.%f') >= datetime.utcnow() else None
+            return d_token if datetime.strptime(d_token['expiry'],
+                                                '%Y-%m-%d %H:%M:%S.%f') >= datetime.utcnow() else None
         except jwt.ExpiredSignatureError:
             raise HTTPException(status_code=401, detail='Auth Token Expired.')
         except jwt.InvalidTokenError:
@@ -73,5 +87,10 @@ class Auth:
         except jwt.InvalidTokenError:
             raise HTTPException(status_code=401, detail='Invalid Refresh Token Supplied.')
 
-    def wrapper(self, auth: HTTPAuthorizationCredentials = Security(HTTPBearer())):
-        return self.decode_token(auth.credentials)
+    async def wrapper(self, auth: HTTPAuthorizationCredentials = Security(HTTPBearer())):
+        token = self.decode_token(auth.credentials)
+        if token and 'user' in token:
+            user = await get_user(ObjectId(token['user']['id']), token['user']['type'])
+            if user is not None:
+                return token
+        raise HTTPException(status_code=401, detail='Invalid Access Token Supplied.')

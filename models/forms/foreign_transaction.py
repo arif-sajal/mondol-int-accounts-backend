@@ -1,8 +1,9 @@
 from pydantic import validator
 from odmantic.bson import BaseBSONModel, ObjectId
+from typing import Optional
 
 # Import Models
-from models import TransactionType, TransactionReferenceType
+from models import TransactionType
 
 # Import Validators
 from validators.form.notEmpty import not_empty
@@ -10,15 +11,14 @@ from validators.form.notEmpty import not_empty
 
 class ForeignTransactionForm(BaseBSONModel):
     from_currency: ObjectId
-    to_currency: ObjectId
     rate: float
     amount: float
-    cv_amount: float
     type: TransactionType
-    reference_type: TransactionReferenceType
-    reference: ObjectId
+    client: ObjectId
+    ad_rate: float
     note: str
     remark: str
+    created_at: Optional[str]
 
     # Validators
-    _non_empty_fields = validator('type', 'reference_type', allow_reuse=True)(not_empty)
+    _non_empty_fields = validator('type', 'client', allow_reuse=True)(not_empty)

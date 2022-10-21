@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from api import demoData, auth, country, currency, role, admin, client, account, local_transaction, foreign_transaction
+from api import demoData, auth, country, currency, role, admin, client, account, local_transaction, foreign_transaction, contact
 
 description = """
 
@@ -92,6 +92,14 @@ _Authentication_, _Countries_, _Currencies_, _Roles_, _Admins_, _Clients_, _Acco
 * **Create Foreign Transaction** (_Implemented_).
 * **Update Foreign Transaction** (_Implemented_).
 * **Delete Foreign Transaction** (_Implemented_).
+
+## Contact
+
+* **Read Contact** (Pagination) (_Implemented_).
+* **Read Single Contact** (_Implemented_).
+* **Create Contact** (_Implemented_).
+* **Update Contact** (_Implemented_).
+* **Delete Contact** (_Implemented_).
 """
 
 tags_metadata = [
@@ -134,6 +142,10 @@ tags_metadata = [
     {
         "name": "Foreign Transaction",
         "description": "Operations with **foreign transactions**."
+    },
+    {
+        "name": "Contact",
+        "description": "Operations with **contacts**."
     }
 ]
 
@@ -170,3 +182,4 @@ app.include_router(client.api)
 app.include_router(account.api)
 app.include_router(local_transaction.api)
 app.include_router(foreign_transaction.api)
+app.include_router(contact.api)

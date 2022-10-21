@@ -4,6 +4,7 @@ from typing import Optional
 
 # Import Models
 from .country import Country
+from .currency import Currency
 from .auth import PhoneLogin, ResetPassword
 
 # Import Utility Validators
@@ -24,6 +25,9 @@ class Client(Model):
     status: bool = Field(default=False)
     avatar: Optional[FilePath]
     country: Country = Reference()
+    currency: Currency = Reference()
+    balance: float = Field(default=0.00)
+    ad_balance: float = Field(default=0.00)
     created_at: datetime.datetime = Field(default_factory=datetime.datetime.utcnow)
     updated_at: datetime.datetime = Field(default_factory=datetime.datetime.utcnow)
 
@@ -39,6 +43,9 @@ class ClientOut(Model):
     status: bool = Field(default=False)
     avatar: Optional[FilePath]
     country: Country = Reference()
+    currency: Currency = Reference()
+    balance: float = Field(default=0.00)
+    ad_balance: float = Field(default=0.00)
     created_at: datetime.datetime = Field(default_factory=datetime.datetime.utcnow)
     updated_at: datetime.datetime = Field(default_factory=datetime.datetime.utcnow)
 

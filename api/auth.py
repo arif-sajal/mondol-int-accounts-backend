@@ -4,6 +4,7 @@ from odmantic import ObjectId
 # Import Helpers
 from helpers.auth import Auth
 from helpers.database import db
+from helpers.sms import SMS
 
 # Import Models
 from models.admin import Admin
@@ -37,6 +38,7 @@ from models.response.auth.reset import \
 
 # Import Utils
 from datetime import datetime, timedelta
+import random
 
 api = APIRouter(
     prefix='/v1/auth',
@@ -106,8 +108,12 @@ async def request_otp_for_phone_login(cred: RequestOtpForPhoneLoginForm, respons
             )
 
         if user.phone_login is None:
+            #otp = random.randint(0000, 9999)
+            otp = 1234
+            message = f'Your MONDOLINT login otp is {otp}'
+            report = SMS(to=user.phone, msg=message).send()
             phone_login = PhoneLogin(
-                code='123456',
+                code=otp,
                 expiry=datetime.utcnow() + timedelta(minutes=2)
             )
 

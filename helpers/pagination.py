@@ -94,7 +94,6 @@ def _prepare_filters(filters):
             prepared_filters[fil["field"]].update(filter_value)
         else:
             prepared_filters.update({f'{fil["field"]}': filter_value})
-    print(prepared_filters)
     return prepared_filters
 
 

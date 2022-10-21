@@ -24,6 +24,7 @@ class Modules(TypedDict):
     country: Permissions
     currency: Permissions
     account: Permissions
+    contact: Permissions
 
 
 class RoleForm(BaseBSONModel):

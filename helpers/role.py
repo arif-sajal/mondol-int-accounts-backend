@@ -190,6 +190,28 @@ modules = [
                 'label': 'Delete',
             }
         ]
+    },
+    {
+        'name': 'contact',
+        'label': 'Contact',
+        'permissions': [
+            {
+                'name': 'create',
+                'label': 'Create',
+            },
+            {
+                'name': 'read',
+                'label': 'Read',
+            },
+            {
+                'name': 'update',
+                'label': 'Update',
+            },
+            {
+                'name': 'delete',
+                'label': 'Delete',
+            }
+        ]
     }
 ]
 
